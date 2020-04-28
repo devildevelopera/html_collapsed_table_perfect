@@ -1,0 +1,135 @@
+<html>                                                                  
+<head>                                                                  
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'/>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.16/datatables.min.js"></script>
+<link rel="stylesheet" href='https://cdn.datatables.net/v/dt/dt-1.10.16/datatables.min.css'/>
+<style>
+  td.details-control {
+    background: url('https://cdn.rawgit.com/DataTables/DataTables/6c7ada53ebc228ea9bc28b1b216e793b1825d188/examples/resources/details_open.png') no-repeat center center;
+    cursor: pointer;
+  }
+  tr.shown td.details-control {
+      background: url('https://cdn.rawgit.com/DataTables/DataTables/6c7ada53ebc228ea9bc28b1b216e793b1825d188/examples/resources/details_close.png') no-repeat center center;
+  }
+</style>                                          
+</head>                                                                 
+<body>                                                                  
+  <h3>Collapsed Table</h3>
+  <button id="btn-show-all-children" type="button">Expand All</button>
+  <button id="btn-hide-all-children" type="button">Collapse All</button>
+  <hr>
+  <table id="example" class="display" cellspacing="0" width="100%">
+      <thead>
+          <tr>
+              <th></th>
+              <th>node_id</th>
+              <th>created_at</th>
+              <th>updated_at</th>
+              <th>req_recon</th>
+              <th>type_of_change</th>
+          </tr>
+      </thead>
+      <!-- <tfoot>
+          <tr>
+              <th></th>
+              <th>node_id</th>
+              <th>created_at</th>
+              <th>updated_at</th>
+              <th>req_recon</th>
+          </tr>
+      </tfoot> -->
+  </table>
+<script>
+/* Formatting function for row details - modify as you need */
+function format ( d ) {
+    // `d` is the original data object for the row
+    return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+        '<tr>'+
+            '<td>private_tags:</td>'+
+            '<td>'+JSON.stringify(d.private_tags)+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td>public_tags</td>'+
+            '<td>'+JSON.stringify(d.public_tags)+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td>user:</td>'+
+            '<td>'+d.public_node_data.user+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td>lat:</td>'+
+            '<td>'+d.public_node_data.lat+'</td>'+
+        '</tr>'+
+        '<tr>'+
+            '<td>lon:</td>'+
+            '<td>'+d.public_node_data.lon+'</td>'+
+        '</tr>'+
+    '</table>';
+}
+
+$(document).ready(function() {
+    var table = $('#example').DataTable({
+        'ajax': 'http://localhost/collapsed_table/data.json',
+        'columns': [
+            {
+                'className':      'details-control',
+                'orderable':      false,
+                'data':           null,
+                'defaultContent': ''
+            },
+            { 'data': 'node_id' },
+            { 'data': 'created_at' },
+            { 'data': 'updated_at' },
+            { 'data': 'req_recon' },
+            { 'data': 'type_of_change' }
+        ],
+        'order': [[1, 'asc']]
+    } );
+
+    // Add event listener for opening and closing details
+    $('#example tbody').on('click', 'td.details-control', function(){
+        var tr = $(this).closest('tr');
+        var row = table.row( tr );
+
+        if(row.child.isShown()){
+            // This row is already open - close it
+            row.child.hide();
+            tr.removeClass('shown');
+        } else {
+            // Open this row
+            row.child(format(row.data())).show();
+            tr.addClass('shown');
+        }
+    });
+
+    // Handle click on "Expand All" button
+    $('#btn-show-all-children').on('click', function(){
+        // Enumerate all rows
+        table.rows().every(function(){
+            // If row has details collapsed
+            if(!this.child.isShown()){
+                // Open this row
+                this.child(format(this.data())).show();
+                $(this.node()).addClass('shown');
+            }
+        });
+    });
+
+    // Handle click on "Collapse All" button
+    $('#btn-hide-all-children').on('click', function(){
+        // Enumerate all rows
+        table.rows().every(function(){
+            // If row has details expanded
+            if(this.child.isShown()){
+                // Collapse row details
+                this.child.hide();
+                $(this.node()).removeClass('shown');
+            }
+        });
+    });
+});
+</script>
+</body>                                                                 
+</html>
